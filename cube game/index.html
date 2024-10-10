@@ -1,20 +1,227 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cube Game</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Tetris</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        canvas {
+            background-color: #fff;
+            border: 2px solid #000;
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/8.3.2/mocha.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.3.4/chai.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sinon.js/10.0.0/sinon.min.js"></script>
 
 </head>
 <body>
+<canvas width="200" height="400" id="tetris"></canvas>
+<script>
+  const canvas = document.getElementById('tetris');
+  const context = canvas.getContext('2d');
+  const grid = createGrid();
+  let piece = null;
+  let score = 0;
+  let isPaused = false;
 
-<div id="game-container">
-    <canvas id="cube-canvas"></canvas>
-    <div id="ui-overlay">
-        <div id="timer">00:00:00</div>
-        <button id="reset-button">Reset</button>
-        <button id="stats-button">Stats</button>
-        <div id="message"></div> </div>
-</div>
-<script src="script.js"></script>
+  const colors = [
+    null,
+    'red',
+    'blue',
+    'green',
+    'yellow',
+    'purple',
+    'orange',
+    'cyan'
+  ];
+
+  const pieces = [
+    null,
+    [[1, 1, 1, 1]], // I
+    [[2, 2], [2, 2]], // O
+    [[0, 3, 0], [3, 3, 3]], // T
+    [[4, 4, 4], [0, 0, 4]], // J
+    [[4, 4, 4], [4, 0, 0]], // L
+    [[0, 5, 5], [5, 5, 0]], // S
+    [[6, 6, 0], [0, 6, 6]]  // Z
+  ];
+
+
+  function createGrid() {
+    return Array.from({ length: 20 }, () => Array(10).fill(0));
+  }
+
+  function createPiece() {
+    const typeId = Math.floor(Math.random() * 7) + 1;
+    const matrix = pieces[typeId];
+    return {
+      matrix: matrix,
+      typeId: typeId,
+      x: 3, // Initial horizontal position
+      y: -2  // Start above visible grid
+    };
+  }
+
+  function draw() {
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawGrid();
+    drawPiece();
+  }
+
+  function drawGrid() {
+    grid.forEach((row, y) => {
+      row.forEach((value, x) => {
+        if (value !== 0) {
+          context.fillStyle = colors[value];
+          context.fillRect(x * 20, y * 20, 20, 20);
+          context.strokeStyle = 'black';
+          context.strokeRect(x * 20, y * 20, 20, 20);
+        }
+      });
+    });
+  }
+
+
+  function drawPiece() {
+    if (piece) {
+      piece.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value !== 0) {
+            context.fillStyle = colors[value];
+            context.fillRect((piece.x + x) * 20, (piece.y + y) * 20, 20, 20);
+            context.strokeStyle = 'black';
+            context.strokeRect((piece.x + x) * 20, (piece.y + y) * 20, 20, 20);
+
+          }
+        });
+      });
+    }
+  }
+
+  function mergePiece() {
+    piece.matrix.forEach((row, y) => {
+      row.forEach((value, x) => {
+        if (value !== 0) {
+          grid[piece.y + y][piece.x + x] = value;
+        }
+      });
+    });
+  }
+
+  function rotatePiece() {
+    const rotatedMatrix = piece.matrix[0].map((val, index) => piece.matrix.map(row => row[index]).reverse());
+    piece.matrix = rotatedMatrix;
+
+    // Adjust position if rotation causes collision with walls
+    if (piece.x + piece.matrix[0].length > 10) {
+      piece.x = 10 - piece.matrix[0].length;
+    } else if (piece.x < 0) {
+      piece.x = 0;
+    }
+  }
+
+
+  function clearRows() {
+    let rowsCleared = 0;
+    for (let y = grid.length - 1; y >= 0; y--) {
+      if (grid[y].every(value => value !== 0)) {
+
+        grid.splice(y, 1);
+        grid.unshift(Array(10).fill(0));
+        rowsCleared++;
+        y++; // Recheck the current row
+      }
+    }
+    updateScore(rowsCleared);
+  }
+
+
+  function updateScore(rowsCleared) {
+    if (rowsCleared > 0) {
+      score += rowsCleared * 100; // Award 100 points per row
+      console.log("Score:", score);
+    }
+  }
+
+
+  function collide(newX, newY) {
+    const matrix = piece.matrix;
+
+    for (let y = 0; y < matrix.length; y++) {
+      for (let x = 0; x < matrix[y].length; x++) {
+        if (matrix[y][x] !== 0 &&
+          (newY + y >= 20 || newX + x < 0 || newX + x >= 10 || grid[newY + y][newX + x])) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function gameOver() {
+    alert("Game Over! Your score: " + score);
+    resetGame();
+  }
+
+  function resetGame() {
+    grid.forEach(row => row.fill(0));
+    score = 0;
+    piece = createPiece();
+  }
+
+  function gameLoop() {
+
+    if (!isPaused) {
+      if (!piece) {
+        piece = createPiece();
+      }
+
+      if (collide(piece.x, piece.y + 1)) {
+        mergePiece();
+        clearRows();
+        piece = null;
+        if (collide(3, 0)) { //check gameover condition after clearing rows
+          gameOver();
+        }
+      } else {
+        piece.y++;
+      }
+
+      draw();
+    }
+
+    requestAnimationFrame(gameLoop); // Keep the loop running
+  }
+
+  document.addEventListener('keydown', event => {
+    if (piece) {
+      if (event.key === 'ArrowLeft' && !collide(piece.x - 1, piece.y)) {
+        piece.x--;
+      } else if (event.key === 'ArrowRight' && !collide(piece.x + 1, piece.y)) {
+        piece.x++;
+      } else if (event.key === 'ArrowDown') {
+        piece.y++;
+      } else if (event.key === 'ArrowUp' || event.key === ' ') { // Rotate with up arrow or space
+        rotatePiece();
+      } else if (event.key === 'p'){ // Pausing using p
+        isPaused = !isPaused;
+      }
+    }
+
+  });
+
+  gameLoop(); // Start the game loop
+</script>
 </body>
 </html>

@@ -1,135 +1,135 @@
 const expect = chai.expect;
 
-describe('Cube Game Tests', function() {
-  // Stub console.log for tests that require it
-  let consoleLogStub;
+describe('Tetris Game Tests', function() {
   
-  beforeEach(function() {
+  // Helper function to safely execute functions
+  function safeFunctionCall(fn, ...args) {
     try {
-      resetGame();
+      return fn(...args);
     } catch (error) {
-      console.error("resetGame is not defined", error);
+      throw new Error(`${fn.name || 'Function'} is not defined or failed.`);
     }
-    consoleLogStub = sinon.stub(console, 'log');
-  });
+  }
   
-  afterEach(function() {
-    consoleLogStub.restore();
-  });
-  
-  it('should initialize a 3x3x3 cube with Swift flip, scramble length 20, Perspective camera, Cube color scheme', function() {
+  it('Test Case 1: Initialize the grid with 10x20 cells.', function() {
+    let grid;
     try {
-      initializeGame(3, 20, 'Swift', 'Perspective', 'Cube');
-      expect(gameState.cubeSize).to.equal(3);
-      expect(gameState.scrambleLength).to.equal(20);
-      expect(gameState.flipType).to.equal('Swift');
-      expect(gameState.cameraAngle).to.equal('Perspective');
-      expect(gameState.colorScheme).to.equal('Cube');
+      grid = createGrid();
     } catch (error) {
-      console.error("initializeGame or gameState is not defined", error);
-      expect.fail("initializeGame or gameState is not defined");
+      throw new Error('createGrid is not defined or failed.');
     }
+    expect(grid.length).to.equal(20); // Check rows
+    expect(grid[0].length).to.equal(10); // Check columns
   });
   
-  it('should initialize a 4x4x4 cube with Bounce flip, scramble length 25, Ortographic camera, Dust color scheme', function() {
+  it('Test Case 2: Generate the first piece when the game starts.', function() {
+    let piece;
     try {
-      initializeGame(4, 25, 'Bounce', 'Ortographic', 'Dust');
-      expect(gameState.cubeSize).to.equal(4);
-      expect(gameState.scrambleLength).to.equal(25);
-      expect(gameState.flipType).to.equal('Bounce');
-      expect(gameState.cameraAngle).to.equal('Ortographic');
-      expect(gameState.colorScheme).to.equal('Dust');
+      piece = createPiece();
     } catch (error) {
-      console.error("initializeGame or gameState is not defined", error);
-      expect.fail("initializeGame or gameState is not defined");
+      throw new Error('createPiece is not defined or failed.');
     }
+    expect(piece).to.not.be.null;
+    expect(piece.x).to.equal(3); // Initial x position
+    expect(piece.y).to.equal(-2); // Initial y position (starting above the grid)
   });
   
-  it('should initialize a 5x5x5 cube with Smooth flip, scramble length 30, Perspective camera, Rain color scheme', function() {
+  it('Test Case 3: Move the active piece left.', function() {
+    piece = createPiece();
+    const initialX = piece.x;
     try {
-      initializeGame(5, 30, 'Smooth', 'Perspective', 'Rain');
-      expect(gameState.cubeSize).to.equal(5);
-      expect(gameState.scrambleLength).to.equal(30);
-      expect(gameState.flipType).to.equal('Smooth');
-      expect(gameState.cameraAngle).to.equal('Perspective');
-      expect(gameState.colorScheme).to.equal('Rain');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
     } catch (error) {
-      console.error("initializeGame or gameState is not defined", error);
-      expect.fail("initializeGame or gameState is not defined");
+      throw new Error('Keydown event for "ArrowLeft" is not defined or failed.');
     }
+    expect(piece.x).to.equal(initialX - 1);
   });
   
-  it('should start the game', function() {
+  it('Test Case 4: Move the active piece right.', function() {
+    piece = createPiece();
+    const initialX = piece.x;
     try {
-      startGame();
-      expect(gameState.isRunning).to.be.true;
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
     } catch (error) {
-      console.error("startGame or gameState is not defined", error);
-      expect.fail("startGame or gameState is not defined");
+      throw new Error('Keydown event for "ArrowRight" is not defined or failed.');
     }
+    expect(piece.x).to.equal(initialX + 1);
   });
   
-  it('should reset the game', function() {
+  it('Test Case 5: Move the active piece down.', function() {
+    piece = createPiece();
+    const initialY = piece.y;
     try {
-      startGame();
-      resetGame();
-      expect(gameState.isRunning).to.be.false;
-      expect(gameState.isPaused).to.be.false;
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
     } catch (error) {
-      console.error("resetGame or gameState is not defined", error);
-      expect.fail("resetGame or gameState is not defined");
+      throw new Error('Keydown event for "ArrowDown" is not defined or failed.');
     }
+    expect(piece.y).to.equal(initialY + 1);
   });
   
-  it('should pause the game', function() {
+  it('Test Case 6: Rotate the active piece.', function() {
+    piece = createPiece();
+    const initialMatrix = JSON.stringify(piece.matrix);
     try {
-      startGame();
-      pauseGame();
-      expect(gameState.isPaused).to.be.true;
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
     } catch (error) {
-      console.error("pauseGame or gameState is not defined", error);
-      expect.fail("pauseGame or gameState is not defined");
+      throw new Error('Keydown event for "ArrowUp" is not defined or failed.');
     }
+    const rotatedMatrix = JSON.stringify(piece.matrix);
+    expect(rotatedMatrix).to.not.equal(initialMatrix); // Ensure the piece rotated
   });
   
-  it('should change color scheme during gameplay', function() {
+  it('Test Case 7: Clear a completed row.', function() {
+    grid[19].fill(1); // Simulate a completed row at the bottom
     try {
-      initializeGame(3, 20, 'Swift', 'Perspective', 'Cube');
-      gameState.colorScheme = 'Erno';
-      expect(gameState.colorScheme).to.equal('Erno');
+      clearRows();
     } catch (error) {
-      console.error("initializeGame or gameState is not defined", error);
-      expect.fail("initializeGame or gameState is not defined");
+      throw new Error('clearRows is not defined or failed.');
     }
+    expect(grid[19].every(cell => cell === 0)).to.be.true; // The bottom row should now be empty
   });
   
-  it('should initialize a cube with scramble length 0', function() {
+  it('Test Case 8: Pause the game.', function() {
+    isPaused = false;
     try {
-      initializeGame(3, 0, 'Swift', 'Perspective', 'Cube');
-      expect(gameState.scrambleLength).to.equal(0);
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'p' }));
     } catch (error) {
-      console.error("initializeGame or gameState is not defined", error);
-      expect.fail("initializeGame or gameState is not defined");
+      throw new Error('Keydown event for "p" is not defined or failed.');
     }
+    expect(isPaused).to.be.true; // Check if the game is paused
   });
   
-  it('should complete the game and log completion', function() {
+  it('Test Case 9: Resume the game.', function() {
+    isPaused = true;
     try {
-      completeGame();
-      expect(console.log.calledWith("Complete!")).to.be.true;
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'p' }));
     } catch (error) {
-      console.error("completeGame is not defined", error);
-      expect.fail("completeGame is not defined");
+      throw new Error('Keydown event for "p" is not defined or failed.');
     }
+    expect(isPaused).to.be.false; // Check if the game resumes
   });
   
-  it('should view stats during gameplay', function() {
+  it('Test Case 10: Increase the score after clearing rows.', function() {
+    const initialScore = score;
+    grid[19].fill(1); // Simulate a completed row
     try {
-      viewStats();
-      expect(console.log.calledWith("Stats viewed")).to.be.true;
+      clearRows();
     } catch (error) {
-      console.error("viewStats is not defined", error);
-      expect.fail("viewStats is not defined");
+      throw new Error('clearRows is not defined or failed.');
     }
+    expect(score).to.be.greaterThan(initialScore);
   });
+  
+  it('Test Case 11: End the game when a piece cannot be placed.', function() {
+    grid[0].fill(1); // Fill the top row to simulate game over
+    piece = createPiece();
+    let result;
+    try {
+      result = collide(piece.x, piece.y);
+    } catch (error) {
+      throw new Error('collide is not defined or failed.');
+    }
+    expect(result).to.be.true; // Collision should occur, meaning the game should end
+  });
+  
 });
