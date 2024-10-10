@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cube Game</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Mocha, Chai, and Sinon CDNs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mocha/10.2.0/mocha.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/10.2.0/mocha.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.3.6/chai.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sinon.js/13.0.0/sinon.min.js"></script>
+
+</head>
+<body>
+<script>mocha.setup('bdd');</script>
+
+<div id="mocha"></div>
+
+<div id="game-container">
+    <canvas id="cube-canvas"></canvas>
+    <div id="ui-overlay">
+        <div id="timer">00:00:00</div>
+        <button id="reset-button">Reset</button>
+        <button id="stats-button">Stats</button>
+        <div id="message"></div> </div>
+</div>
+<script src="script.js"></script>
+<script src="./tests/tests.js"></script>
+
+<script>
+  mocha.run();
+</script>
+</body>
+</html>
